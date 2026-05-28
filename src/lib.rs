@@ -1,6 +1,6 @@
+use rand::Rng;
 use std::collections::HashMap;
 use std::ptr::eq;
-use rand::Rng;
 
 // Name Assignment (variables and constants)
 // TODO: Assign the current bitcoin mining reward
@@ -26,7 +26,7 @@ pub fn calculate_total_reward(blocks_mined: u64) -> f64 {
 /// Return true if the transaction fee is between 0.00001 and 0.01 BTC.
 pub fn is_valid_tx_fee(fee: f64) -> bool {
     // TODO: Check if fee is between 0.00001 and 0.01 BTC (inclusive)
-    fee >= 0.00001 && fee <= 0.01
+    (0.00001..=0.01).contains(&fee)
 }
 
 /// Return true if the wallet balance is greater than 50.0 BTC.
@@ -40,9 +40,13 @@ pub fn tx_priority(size_bytes: u64, fee_btc: f64) -> &'static str {
     // TODO: Calculate fee rate (fee_btc / size_bytes) and use if/else if/else
     // High: > 0.00005, Medium: > 0.00001, otherwise Low
     let fee_rate = fee_btc / size_bytes as f64;
-    if fee_rate > 0.00005 {"high"}
-    else if fee_rate > 0.00001 {"medium"}
-    else {"low"}
+    if fee_rate > 0.00005 {
+        "high"
+    } else if fee_rate > 0.00001 {
+        "medium"
+    } else {
+        "low"
+    }
 }
 
 /// Return true if the network string equals "mainnet" (case-insensitive).
@@ -66,7 +70,7 @@ pub fn is_same_wallet<T>(wallet1: &T, wallet2: &T) -> bool {
 /// Normalize a Bitcoin address by trimming whitespace and lowercasing.
 pub fn normalize_address(address: &str) -> String {
     // TODO: Trim leading/trailing whitespace and convert to lowercase
-    format!("{}", address.trim().to_lowercase())
+    address.trim().to_lowercase().to_string()
 }
 
 /// Append a new UTXO to the list and return the updated list.
@@ -79,7 +83,11 @@ pub fn add_utxo(mut utxos: Vec<Utxo>, new_utxo: Utxo) -> Vec<Utxo> {
 /// Find the first transaction with a fee greater than 0.005 BTC.
 pub fn find_high_fee(fee_list: &[f64]) -> Option<(usize, f64)> {
     // TODO: Iterate with enumerate and return the first (index, fee) where fee > 0.005
-    fee_list.iter().enumerate().find(|(_, &fee)| fee > 0.005).map(|(i, &fee)| (i, fee))
+    fee_list
+        .iter()
+        .enumerate()
+        .find(|(_, &fee)| fee > 0.005)
+        .map(|(i, &fee)| (i, fee))
 }
 
 /// Return basic wallet details as a tuple of (name, balance).
@@ -90,16 +98,22 @@ pub fn get_wallet_details() -> (String, f64) {
 
 /// Get the status of a transaction from the mempool or "not found".
 pub fn get_tx_status(tx_pool: &HashMap<String, String>, txid: &str) -> String {
-    // TODO: Look up txid in tx_pool, returning the status or "not found"  
+    // TODO: Look up txid in tx_pool, returning the status or "not found"
     // `cloned` converts Option<&String> to Option<String>
-    tx_pool.get(txid).cloned().unwrap_or_else(|| "not found".to_string())
+    tx_pool
+        .get(txid)
+        .cloned()
+        .unwrap_or_else(|| "not found".to_string())
 }
 
 /// Destructure wallet_info and format a status string.
 pub fn unpack_wallet_info(wallet_info: (String, f64)) -> String {
     // TODO: Destructure the tuple into (name, balance) and format the result
     // Expected format: "Wallet <name> has balance: <balance> BTC"
-    format!("Wallet {} has balance: {} BTC", wallet_info.0, wallet_info.1)
+    format!(
+        "Wallet {} has balance: {} BTC",
+        wallet_info.0, wallet_info.1
+    )
 }
 
 /// Convert BTC to satoshis (1 BTC = 100,000,000 sats).
@@ -126,8 +140,12 @@ pub fn validate_block_height(height: i64) -> (bool, String) {
     // TODO: Check that height is not negative
     // TODO: Check that height is within a realistic range (<= 800_000)
     // TODO: Return (true, "Valid block height") otherwise
-    if height < 0 { return (false, "Block height cannot be negative".to_string()); }
-    if height > 800_000 { return (false, "Block height is unrealistic".to_string()); }
+    if height < 0 {
+        return (false, "Block height cannot be negative".to_string());
+    }
+    if height > 800_000 {
+        return (false, "Block height is unrealistic".to_string());
+    }
     (true, "Valid block height".to_string())
 }
 
@@ -136,14 +154,21 @@ pub fn halving_schedule(blocks: &[u64]) -> HashMap<u64, u64> {
     // TODO: Base reward is 50 * 100_000_000 sats; halving interval is 210_000 blocks
     // TODO: For each block: halvings = block / 210_000; reward = base >> halvings
     // TODO: Insert (block, reward) into the result HashMap
-    blocks.iter().map(|&b| (b, (50 * BTC_TO_SATS) >> (b / 210_000))).collect()
+    blocks
+        .iter()
+        .map(|&b| (b, (50 * BTC_TO_SATS) >> (b / 210_000)))
+        .collect()
 }
 
 /// Find the UTXO with the smallest value that meets or exceeds target.
 pub fn find_utxo_with_min_value(utxos: &[Utxo], target: u64) -> Option<Utxo> {
     // TODO: Filter UTXOs to those with value >= target
     // TODO: Return the one with the smallest value, or None if none qualify
-    utxos.iter().filter(|u| u.value >= target).min_by_key(|u| u.value).cloned()
+    utxos
+        .iter()
+        .filter(|u| u.value >= target)
+        .min_by_key(|u| u.value)
+        .cloned()
 }
 
 /// Create a UTXO map from txid, vout, and arbitrary extra string fields.
@@ -168,12 +193,12 @@ pub fn extract_tx_version(raw_tx_hex: &str) -> Result<u32, String> {
     if raw_tx_hex.len() < 8 {
         return Err("Transaction data too short".to_string());
     }
-    
+
     let bytes = match hex::decode(&raw_tx_hex[0..8]) {
         Ok(value) => value,
         Err(_) => return Err("Hex decode error".to_string()),
     };
-    
+
     if bytes.len() != 4 {
         return Err("Invalid version bytes".to_string());
     }
