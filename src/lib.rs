@@ -138,7 +138,7 @@ pub fn generate_address(prefix: &str) -> String {
 /// Validate a Bitcoin block height. Returns (is_valid, message).
 pub fn validate_block_height(height: i64) -> (bool, String) {
     // TODO: Check that height is not negative
-    // TODO: Check that height is within a realistic range (<= 800_000)
+    // TODO: Check that height is within a realistic range (<= 1_000_000)
     // TODO: Return (true, "Valid block height") otherwise
     if height < 0 {
         return (false, "Block height cannot be negative".to_string());
